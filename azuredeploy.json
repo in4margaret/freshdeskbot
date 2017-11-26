@@ -1,0 +1,195 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string"
+        },
+        "hostingPlanName": {
+            "type": "string"
+        },
+        "siteLocation": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string",
+            "allowedValues": [
+                "Free",
+                "Shared",
+                "Basic",
+                "Standard"
+            ],
+            "defaultValue": "Free"
+        },
+        "workerSize": {
+            "type": "string",
+            "allowedValues": [
+                "0",
+                "1",
+                "2"
+            ],
+            "defaultValue": "0"
+        },
+        "MICROSOFT_APP_ID": {
+            "type": "string",
+            "metadata": {
+                "description": "MICROSOFT_APP_ID env variable. More info at https://docs.microsoft.com/en-us/bot-framework/portal-register-bot"
+            },
+            "defaultValue": ""
+        },
+        "MICROSOFT_APP_PASSWORD": {
+            "type": "string",
+            "metadata": {
+                "description": "MICROSOFT_APP_PASSWORD env variable. More info at https://docs.microsoft.com/en-us/bot-framework/portal-register-bot"
+            },
+            "defaultValue": ""
+        },
+        "FRESHDESK_USER": {
+            "type": "string",
+            "metadata": {
+                "description": "FRESHDESK_USER env variable. (Smth like cXIKPWERTYc04M5d7777P) More info at https://developer.freshdesk.com/api/#authentication"
+            },
+            "defaultValue": ""
+        },
+        "FRESHDESK_URL": {
+            "type": "string",
+            "metadata": {
+                "description": "FRESHDESK_URL env variable. (Smth like https://workwithcat.freshdesk.com/api/v2/tickets) More info at https://identify.pitneybowes.com/docs/identify/v1/en/rest/index.html#CustomerInformationManagementAPI/source/RegisteringPBMarketplace.html"
+            },
+            "defaultValue": ""
+        },
+        "LUIS_MODEL_URL": {
+            "type": "string",
+            "metadata": {
+                "description": "LUIS_MODEL_URL env variable. More info at https://azure.com"
+            },
+            "defaultValue": ""
+        },
+        "AZURE_SEARCH_ACCOUNT": {
+            "type": "string",
+            "metadata": {
+                "description": "AZURE_SEARCH_ACCOUNT env variable. More info at https://azure.com"
+            },
+            "defaultValue": ""
+        },
+        "AZURE_SEARCH_INDEX": {
+            "type": "string",
+            "metadata": {
+                "description": "AZURE_SEARCH_INDEX env variable. More info at https://azure.com"
+            },
+            "defaultValue": ""
+        },
+        "AZURE_SEARCH_KEY": {
+            "type": "string",
+            "metadata": {
+                "description": "AZURE_SEARCH_KEY env variable. More info at https://azure.com"
+            },
+            "defaultValue": ""
+        },
+        "TEXT_ANALYTICS_KEY": {
+            "type": "string",
+            "metadata": {
+                "description": "TEXT_ANALYTICS_KEY env variable. More info at https://azure.com"
+            },
+            "defaultValue": ""
+        },
+        "repoUrl": {
+            "type": "string"
+        },
+        "branch": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-04-01",
+            "name": "[parameters('hostingPlanName')]",
+            "type": "Microsoft.Web/serverFarms",
+            "location": "[parameters('siteLocation')]",
+            "properties": {
+                "sku": "[parameters('sku')]",
+                "workerSize": "[parameters('workerSize')]",
+                "numberOfWorkers": 1
+            }
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "name": "[parameters('siteName')]",
+            "type": "Microsoft.Web/Sites",
+            "location": "[parameters('siteLocation')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+            ],
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty"
+            },
+            "properties": {
+                "serverFarmId": "[parameters('hostingPlanName')]",
+                "siteConfig": {
+                    "webSocketsEnabled": true,
+                    "appSettings": [
+                        {
+                            "name": "websiteUrl",
+                            "value": ""
+                        },
+                        {
+                            "name": "MICROSOFT_APP_ID",
+                            "value": "[parameters('MICROSOFT_APP_ID')]"
+                        },
+                        {
+                            "name": "MICROSOFT_APP_PASSWORD",
+                            "value": "[parameters('MICROSOFT_APP_PASSWORD')]"
+                        },
+                        {
+                            "name": "FRESHDESK_USER",
+                            "value": "[parameters('FRESHDESK_USER')]"
+                        },
+                        {
+                            "name": "FRESHDESK_URL",
+                            "value": "[parameters('FRESHDESK_URL')]"
+                        },
+                        {
+                            "name": "LUIS_MODEL_URL",
+                            "value": "[parameters('LUIS_MODEL_URL')]"
+                        },
+                        {
+                            "name": "AZURE_SEARCH_ACCOUNT",
+                            "value": "[parameters('AZURE_SEARCH_ACCOUNT')]"
+                        },
+                        {
+                            "name": "AZURE_SEARCH_INDEX",
+                            "value": "[parameters('AZURE_SEARCH_INDEX')]"
+                        },
+                        {
+                            "name": "AZURE_SEARCH_KEY",
+                            "value": "[parameters('AZURE_SEARCH_KEY')]"
+                        },
+                        {
+                            "name": "TEXT_ANALYTICS_KEY",
+                            "value": "[parameters('TEXT_ANALYTICS_KEY')]"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "6.9.1"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "[parameters('repoUrl')]",
+                        "branch": "[parameters('branch')]",
+                        "IsManualIntegration": true
+                    }
+                }
+            ]
+        }
+    ]
+}
